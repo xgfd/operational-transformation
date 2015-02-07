@@ -1,0 +1,23 @@
+{
+  "name": "ot",
+  "version": "1.0.0",
+  "description": "An example implementation of ot",
+  "main": "ot.js",
+  "dependencies": {
+    "md5": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xgfd/ot.git"
+  },
+  "author": "xgfd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xgfd/ot/issues"
+  },
+  "homepage": "https://github.com/xgfd/ot"
+}
