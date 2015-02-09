@@ -3,8 +3,7 @@
 //hash->state
 //msg: [parent-state, child-state, op]
 //history: {parent-state: {l: msg, r: msg}}
-var uid = 'c1',
-    socket;
+var uid, socket;
 
 var history = {};
 
@@ -26,10 +25,10 @@ function onConnect(data) {
 //send a message to server
 function send(msg) {
     msg.push(uid);
-    //setTimeout(function () {
-    socket.emit('msg', msg);
-    console.log(msg);
-    //}, 10000);
+    //for testing, add 5 seconds to simulate network delay
+    setTimeout(function () {
+        socket.emit('msg', msg);
+    }, 5000);
 };
 
 function onLocalOp(op) {
@@ -71,7 +70,7 @@ function onRemote(msg) {
     } else {
         pushChild(history, ph, msg, 'r');
 
-        if (ph === hash) {
+        if (synced) {
             doc = rdoc;
             hash = rhash;
         } else {
@@ -93,8 +92,6 @@ function move(h1, h2) {
 
     while (cursor !== h2) {
         var record = history[cursor];
-        console.log(cursor);
-        console.log(history);
         var lch = record.l[1],
             rch = record.r[1],
             lop = record.l[2],
@@ -103,8 +100,8 @@ function move(h1, h2) {
 
         interHash = md5(interDoc = apply(newOps[0], interDoc));
         //fill gap states
-        pushChild(lch, [lch, interHash, newOps[1]], 'r');
-        pushChild(rch, [rch, interHash, newOps[0]], 'l');
+        pushChild(history, lch, [lch, interHash, newOps[1]], 'r');
+        pushChild(history, rch, [rch, interHash, newOps[0]], 'l');
 
         cursor = lch;
     }
