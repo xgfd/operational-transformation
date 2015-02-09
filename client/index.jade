@@ -3,4 +3,16 @@ head
   script(src='md5.min.js')
   script(src='xform.js')
   script(src='client.js')
+  script(src='/socket.io/socket.io.js')
+  script.
+    socket = io.connect('http://localhost');
+
+    socket.on('connect', function(){
+      uid = socket.id;
+    });
+
+    socket.on('init', onConnect);
+    socket.on('msg', onRemote);
+
+  script(src='test.js')
 body

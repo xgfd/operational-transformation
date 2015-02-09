@@ -1,1 +1,9 @@
-<!DOCTYPE html><head><script src="md5.min.js"></script><script src="xform.js"></script><script src="client.js"></script></head><body></body>
+<!DOCTYPE html><head><script src="md5.min.js"></script><script src="xform.js"></script><script src="client.js"></script><script src="/socket.io/socket.io.js"></script><script>socket = io.connect('http://localhost');
+
+socket.on('connect', function(){
+  uid = socket.id;
+});
+
+socket.on('init', onConnect);
+socket.on('msg', onRemote);
+</script><script src="test.js"></script></head><body></body>

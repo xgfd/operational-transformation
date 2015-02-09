@@ -3,8 +3,24 @@
     if (typeof exports !== 'undefined') {
         root = exports;
     }
-    root.xform = xform;
     root.apply = apply;
+    root.pushChild = pushChild;
+    root.xform = xform;
+
+    function pushChild(history, hash, msg, lr) {
+        var record;
+        if (!(record = history[hash])) {
+            record = history[hash] = {};
+        };
+
+        if (lr === 'l') {
+            record.l = msg;
+        }
+
+        if (lr === 'r') {
+            record.r = msg;
+        }
+    }
 
     function apply(op, doc) {
         var p = op.p,
@@ -20,9 +36,50 @@
         }
     }
 
+    //transform op against a list of op's
+    var isarr = Array.isArray;
+
+    //reverse a pair
+    function rev(pair) {
+        pair.push(pair.shift());
+        return pair;
+    };
+
+    function xform(op1, op2) {
+
+        //op, op
+        if (!isarr(op1) && !isarr(op2)) {
+            return _xform(op1, op2);
+        }
+
+        //op, arr
+        if (!isarr(op1) && isarr(op2)) {
+            return xformOpArr(op1, op2);
+        }
+
+        //arr, op
+        if (isarr(op1) && !isarr(op2)) {
+            return rev(xformOpArr(op2, op1));
+        }
+    }
+
+    function xformOpArr(op, ops) {
+        var rop, lop, xrops, temxlr;
+
+        xrops = [];
+        lop = op;
+        for (var i = 0; rop = ops[i]; i++) {
+            temxlr = _xform(lop, rop);
+            lop = temxlr[0];
+            xrops.push(temxlr[1]);
+        }
+
+        return [lop, xrops];
+    }
+
     //[op1, op2] -> [xop1, xop2]
     //op1*xop2 === op2*xop1
-    function xform(op1, op2) {
+    function _xform(op1, op2) {
         switch (op1.type + op2.type) {
             case 'insins':
                 return ii(op1, op2);
@@ -38,6 +95,7 @@
     };
 
 
+
     function ii(ins1, ins2) {
         var xop1, xop2;
         var p1 = ins1.p,
@@ -50,7 +108,7 @@
 
                 xop1 = xop2 = null;
 
-                break;
+                return [xop1, xop2];
 
             case p1 <= p2:
 
@@ -61,22 +119,12 @@
                     p: p2 + 1
                 }
 
-                break;
+                return [xop1, xop2];
 
             case p1 > p2:
 
-                xop1 = {
-                    type: 'ins',
-                    c: c1,
-                    p: p1 + 1
-                }
-
-                xop2 = ins2;
-
-                break
+                return rev(ii(ins2, ins1));
         }
-
-        return [xop1, xop2];
     }
 
     function id(ins, del) {
@@ -92,7 +140,7 @@
                 xop1 = ins;
                 xop2 = {
                     type: 'del',
-                    p: p1 + 1
+                    p: p2 + 1
                 }
 
                 break;
@@ -113,40 +161,13 @@
     }
 
     function di(del, ins) {
-        var xop1, xop2;
-        var p1 = del.p,
-            p2 = ins.p,
-            c2 = ins.c;
-
-        switch (true) {
-            case p1 < p2:
-                xop1 = del;
-                xop2 = {
-                    type: 'ins',
-                    c: c2,
-                    p: p2 - 1
-                };
-
-                break;
-
-            case p1 >= p2:
-
-                xop1 = {
-                    type: 'del',
-                    p: p1 + 1
-                }
-                xop2 = ins;
-
-                break;
-        }
-
-        return [xop1, xop2];
+        return rev(id(ins, del));
     }
 
-    function dd(del1, del2) {
+    function dd(op1, op2) {
         var xop1, xop2;
-        var p1 = del1.p,
-            p2 = del2.p;
+        var p1 = op1.p,
+            p2 = op2.p;
 
         switch (true) {
 
@@ -160,16 +181,10 @@
                     type: 'del',
                     p: p2 - 1
                 };
-                break;
+                return [xop1, xop2];
 
             case p1 > p2:
-                xop1 = {
-                    type: 'del',
-                    p: p1 - 1
-                };
-                xop2 = op2;
-                break;
+                return rev(dd(op2, op1));
         }
-        return [xop1, xop2];
     }
 })();
